@@ -1,23 +1,18 @@
 
-let historyData= {
+const medicalHistory= {}
 
-    address :{}
-      
-  }
-
-async function patientHistory(historyData) {
-
-    let requestData={...historyData}
-    for (const [key, value] of Object.entries(requestData)) {
-        requestData.address[key] = value;
-     }
+async function medicalHistoryRecords(_medicalHistory) {
+    medicalHistory[msg_sender] = {
+        ...medicalHistory[msg_sender],
+        ...medicalHistory
+    }
 
     const response = await fetch(rollup_server + "/notice", {
        method: "POST",
        headers: {
          "Content-Type": "application/json",
        },
-       body: JSON.stringify(requestData),
+       body: JSON.stringify(medicalHistory),
     });
    
     if (!response.ok) {
