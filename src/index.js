@@ -5,15 +5,57 @@ const { ethers } = require("ethers");
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollup_server);
 
+const medicalReport= {}
+const medicalHistory= {}
+
+emitNotice = async (data) => {
+  let hexresult = numberToHex(data);
+  console.log(`Hexresult: ${hexresult}`)
+  advance_req = await fetch(rollup_server + "/notice", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ payload: hexresult }),
+  });
+  return advance_req;
+}
+
+emitReport = async(e) => {
+  console.log("error is:", e);
+ console.log(`Adding notice with binary value "${payload}"`);
+ await fetch(rollup_server + "/report", {
+   method: "POST",
+   headers: {
+     "Content-Type": "application/json",
+   },
+   body: JSON.stringify({ payload: payload }),
+ });
+ return "reject";
+}
+
 async function handle_advance(data) {
   console.log("Received advance request data " + JSON.stringify(data));
+
+  const payload = data.payload;
+  console.log('payload...', payload);
+  const payloadStr = ethers.toUtf8String(payload);
+  console.log('payloadStr', payloadStr);
+  JsonPayload = JSON.parse(payloadStr);
+  console.log('JsonPayload.....................', JsonPayload);
+
   return "accept";
 }
+
+
+
 
 async function handle_inspect(data) {
   console.log("Received inspect request data " + JSON.stringify(data));
   return "accept";
 }
+
+
 
 var handlers = {
   advance_state: handle_advance,
@@ -21,6 +63,10 @@ var handlers = {
 };
 
 var finish = { status: "accept" };
+
+
+
+
 
 (async () => {
   while (true) {

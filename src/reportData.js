@@ -1,7 +1,7 @@
 
-const reportData= {}
 
-async function Addpatient(_reportData) {
+
+async function patientMedicalReport(_reportData) {
     reportData[msg_sender] = {
         ...reportData[msg_sender],
         ...reportData
@@ -12,7 +12,7 @@ async function Addpatient(_reportData) {
        headers: {
          "Content-Type": "application/json",
        },
-       body: JSON.stringify(requestData),
+       body: JSON.stringify(reportData),
     });
    
     if (!response.ok) {
