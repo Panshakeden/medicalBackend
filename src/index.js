@@ -11,6 +11,18 @@ let medicalHistory= {}
 let approve={}
 const doctorAddress="0x84c888Eed28F6587B6005CA00e3a2FA9bb40D11a"
 
+
+ //conversion from strings to hex
+ function stringToHex (str) {
+  let hex = "";
+  for (let i = 0; i < str.length; i++) {
+      const charCode = str.charCodeAt(i).toString(16);
+      hex += charCode.padStart(2, '0'); // Ensure each byte is represented by two characters
+  }
+  return `0x${hex}`;
+}
+
+
 const emitNotice = async (data) => {
   let hexresult = stringToHex(data);
   console.log(`stringToHex: ${hexresult}`)
@@ -120,15 +132,7 @@ async function handle_advance(data) {
 async function handle_inspect(data) {
   console.log("Received inspect request data " + JSON.stringify(data));
 
-  //conversion from strings to hex
-  function stringToHex (str) {
-    let hex = "";
-    for (let i = 0; i < str.length; i++) {
-        const charCode = str.charCodeAt(i).toString(16);
-        hex += charCode.padStart(2, '0'); // Ensure each byte is represented by two characters
-    }
-    return `0x${hex}`;
-}
+ 
 
 
 
