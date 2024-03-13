@@ -1,14 +1,17 @@
 // XXX even though ethers is not used in the code below, it's very likely
 // it will be used by any DApp, so we are already including it here
 const { ethers } = require("ethers");
+const{checkMedicalRecordAndHistoryValidity,checkApproveDoctorValidity}=require("./validityChecks")
 
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollup_server);
 
-const medicalReport= {}
-const medicalHistory= {}
+let medicalReport= {}
+let medicalHistory= {}
+let approve={}
+const doctorAddress="0x000000000000000000000000000"
 
-emitNotice = async (data) => {
+const emitNotice = async (data) => {
   let hexresult = numberToHex(data);
   console.log(`Hexresult: ${hexresult}`)
   advance_req = await fetch(rollup_server + "/notice", {
@@ -21,7 +24,7 @@ emitNotice = async (data) => {
   return advance_req;
 }
 
-emitReport = async(e) => {
+const emitReport = async(e) => {
   console.log("error is:", e);
  console.log(`Adding notice with binary value "${payload}"`);
  await fetch(rollup_server + "/report", {
@@ -44,6 +47,76 @@ async function handle_advance(data) {
   JsonPayload = JSON.parse(payloadStr);
   console.log('JsonPayload.....................', JsonPayload);
 
+
+
+  const owner = data.metadata.msg_sender;
+
+  switch (JSONpayload.method) {
+    case methods.APPROVE_DOCTOR:
+      const checksapprove = checkApproveDoctorValidity(owner, doctorAddress)
+    if(checksapprove.success){
+
+      // const approve = { }
+      approve[owner][doctorAddress] = true;
+      await emitNotice({ state: "approved", data: approve })
+
+    }else{
+     await emitReport(checksapprove)
+    }
+      
+      break;
+
+    case methods.ADD_PATIENT_MEDICAL_RECORD:
+
+      const checkMedicalRecord = checkForDoctorUpdatePermission(approve,JSONpayload.patientId,owner);
+      if(checkMedicalRecord.success){
+
+       medicalReport[JSONpayload.patientId] = {
+        ...medicalReport[JSONpayload.patientId],
+        ...JSONpayload.reports
+       }
+
+      await emitNotice({ state: "medical report", data: medicalReport })
+
+       }else{
+        await emitReport(checkMedicalRecord)
+       }
+     
+      break;
+
+    case methods.ADD_PATIENT_MEDICAL_HISTORY:
+      const checkMedicalHistory = checkForDoctorUpdatePermission(JSONpayload);
+     if(checkMedicalHistory.success){
+      
+      medicalHistory[JsonPayload.patientId]={
+        ...medicalHistory[JsonPayload.patientId],
+        ...JsonPayload.reports
+      }
+      await emitNotice({ state: "medical history", data: medicalHistory })
+
+
+     }else{
+    
+     }
+
+
+      break;
+  
+    default:
+      break;
+  }
+
+
+  console.log("Received advance request data " + JSON.stringify(data));
+  return "accept";
+
+
+
+
+
+
+
+
   return "accept";
 }
 
@@ -52,6 +125,19 @@ async function handle_advance(data) {
 
 async function handle_inspect(data) {
   console.log("Received inspect request data " + JSON.stringify(data));
+
+  //conversion from strings to hex
+  function stringToHex (str) {
+    let hex = "";
+    for (let i = 0; i < str.length; i++) {
+        const charCode = str.charCodeAt(i).toString(16);
+        hex += charCode.padStart(2, '0'); // Ensure each byte is represented by two characters
+    }
+    return `0x${hex}`;
+}
+
+
+
   return "accept";
 }
 
