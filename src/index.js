@@ -1,7 +1,7 @@
 // XXX even though ethers is not used in the code below, it's very likely
 // it will be used by any DApp, so we are already including it here
 const { ethers } = require("ethers");
-const{checkMedicalRecordAndHistoryValidity,checkApproveDoctorValidity}=require("./validityChecks")
+const{checkForDoctorUpdatePermission,checkApproveDoctorValidity}=require("./validityChecks")
 
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollup_server);
@@ -9,11 +9,11 @@ console.log("HTTP rollup_server url is " + rollup_server);
 let medicalReport= {}
 let medicalHistory= {}
 let approve={}
-const doctorAddress="0x000000000000000000000000000"
+const doctorAddress="0x84c888Eed28F6587B6005CA00e3a2FA9bb40D11a"
 
 const emitNotice = async (data) => {
-  let hexresult = numberToHex(data);
-  console.log(`Hexresult: ${hexresult}`)
+  let hexresult = stringToHex(data);
+  console.log(`stringToHex: ${hexresult}`)
   advance_req = await fetch(rollup_server + "/notice", {
     method: "POST",
     headers: {
@@ -32,7 +32,9 @@ const emitReport = async(e) => {
    headers: {
      "Content-Type": "application/json",
    },
-   body: JSON.stringify({ payload: payload }),
+   body: JSON.stringify({
+    payload: stringToHex(JSON.stringify({ error: e })),
+  }),
  });
  return "reject";
 }
@@ -56,7 +58,6 @@ async function handle_advance(data) {
       const checksapprove = checkApproveDoctorValidity(owner, doctorAddress)
     if(checksapprove.success){
 
-      // const approve = { }
       approve[owner][doctorAddress] = true;
       await emitNotice({ state: "approved", data: approve })
 
@@ -97,12 +98,13 @@ async function handle_advance(data) {
 
      }else{
     
+      await emitReport(checkMedicalHistory)
+
      }
-
-
       break;
-  
+
     default:
+
       break;
   }
 
@@ -110,14 +112,6 @@ async function handle_advance(data) {
   console.log("Received advance request data " + JSON.stringify(data));
   return "accept";
 
-
-
-
-
-
-
-
-  return "accept";
 }
 
 
